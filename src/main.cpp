@@ -44,6 +44,7 @@ public:
     }
 };
 
+// Should probably not be a global variable in the future
 auto funcMap =
     std::unordered_map<std::string, std::function<void(InArchive &)>>{};
 
@@ -54,7 +55,6 @@ void registerFunction(std::string name, std::function<R(Args...)> f) {
     ((std::cout << ',' << typeDescription<Args>()), ...) << std::endl;
 
     auto callback = [f](InArchive &archive) {
-        //        auto argsTuple = std::tuple<Args...>{};
         auto argsTuple = archive.unpack<Args...>();
         std::apply(f, argsTuple);
     };
@@ -71,16 +71,13 @@ void registerFunction(std::string name, F f) {
 int main(int argc, char *argv[]) {
     registerFunction("testFunction", testFunction);
 
-    auto tuple = std::tuple<int, float>{};
-    auto x = std::tuple_size_v<decltype(tuple)>;
-
+    // Test
     for (auto &it : funcMap) {
         std::cout << it.first << std::endl;
     }
 
+    // This should be replaced with automatic handling
     auto archive = InArchive{"2.\nhello"};
-
-    //    archive.ss << 2.f << "\n" << std::string{"hello"};
 
     funcMap["testFunction"](archive);
 
