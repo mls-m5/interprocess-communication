@@ -4,18 +4,15 @@
 #include <functional>
 #include <unordered_map>
 
-struct FunctionHost {
+template <typename InArchive>
+struct FunctionHostT {
     std::unordered_map<std::string, std::function<void(InArchive &)>> funcMap;
 
     /// Register host std::function
     template <typename R, typename... Args>
     void registerFunction(std::string name, std::function<R(Args...)> f) {
-        //        std::cout << "register function";
-        //        ((std::cout << ',' << typeDescription<Args>()), ...) <<
-        //        std::endl;
-
         auto callback = [f](InArchive &archive) {
-            auto argsTuple = archive.unpack<Args...>();
+            auto argsTuple = archive.template unpack<Args...>();
             std::apply(f, argsTuple);
         };
 
@@ -29,7 +26,7 @@ struct FunctionHost {
     }
 
     void handleArchive(InArchive &archive) {
-        auto name = archive.read<std::string>();
+        auto name = archive.template read<std::string>();
         if (auto f = funcMap.find(name); f != funcMap.end()) {
             f->second(archive);
         }
@@ -39,3 +36,5 @@ struct FunctionHost {
         }
     }
 };
+
+using FunctionHost = FunctionHostT<InArchive>;
