@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <string>
+#include <tuple>
 
 template <typename Type>
 std::string typeDescription() {

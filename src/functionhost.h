@@ -5,7 +5,6 @@
 #include <unordered_map>
 
 struct FunctionHost {
-    // Should probably not be a global variable in the future
     std::unordered_map<std::string, std::function<void(InArchive &)>> funcMap;
 
     /// Register host std::function
