@@ -16,7 +16,6 @@ std::string typeDescription<std::string>() {
 }
 
 class InArchive {
-    std::stringstream ss;
 
     // This could be implemented differently. raw TCP would differ from url etc
     template <typename T>
@@ -25,6 +24,8 @@ class InArchive {
     }
 
 public:
+    std::stringstream ss;
+
     InArchive(const std::string &value)
         : ss{value} {}
 

@@ -8,7 +8,7 @@ struct Settings {
     bool isServer = true;
     bool isClient = true;
     std::string address;
-    int port = 1234;
+    uint32_t port = 1234;
 
     static constexpr auto helpstr = R"_(
 usage:
