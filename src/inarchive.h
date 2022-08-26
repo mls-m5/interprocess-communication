@@ -44,4 +44,9 @@ public:
         unpackSingleArg(ret);
         return ret;
     }
+
+    template <typename T>
+    void writeBinary(const T &data) {
+        ss.write(data.data(), data.size());
+    }
 };

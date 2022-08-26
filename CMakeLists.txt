@@ -7,4 +7,17 @@ add_executable(
     src/main.cpp
     )
 
-target_compile_features(ipc PRIVATE cxx_std_17)
+target_compile_features(
+    ipc
+    PRIVATE
+    cxx_std_17
+    )
+
+find_package (Threads)
+
+target_link_libraries (
+    ipc
+    PRIVATE
+    ${CMAKE_THREAD_LIBS_INIT}
+    )
+
