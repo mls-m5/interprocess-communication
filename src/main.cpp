@@ -15,18 +15,19 @@ int testFunction(float x, std::string str) {
 int main(int argc, char *argv[]) {
     auto settings = Settings{argc, argv};
 
+    // Server side
     auto host = FunctionHost{};
 
-    host.registerFunction("testFunction", testFunction);
-
-    auto udpClient = UdpClient{settings.address, settings.port};
     auto udpServer = UdpServer{settings.port, [&host](std::string data) {
                                    std::cout << "received data: " << data
                                              << std::endl;
 
                                    auto arch = InArchive{data};
-                                   host.handleArchive(arch);
+                                   host.handle(arch);
                                }};
+
+    // Client side
+    auto udpClient = UdpClient{settings.address, settings.port};
 
     auto client = FunctionClient{[&udpClient](OutArchive &arch) {
         // This is where network code would go in
@@ -34,10 +35,21 @@ int main(int argc, char *argv[]) {
         udpClient.send(inArch.ss.str());
     }};
 
+    // Register function on host and client
+    // This is what needs to be done for every functino on the server and
+    // client
+    host.registerFunction("testFunction", testFunction);
+
     auto testFunctionRemoteHandle =
         client.registerFunction<decltype(testFunction)>("testFunction");
 
+    // Test call function
     testFunctionRemoteHandle(3, "hello there");
+
+    host.registerFunction("exit", std::exit);
+    auto exitHandle = client.registerFunction<decltype(exit)>("exit");
+
+    exitHandle(0); // Just testing to bind to exit to stop server
 
     udpServer.start();
 

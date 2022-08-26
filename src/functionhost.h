@@ -25,7 +25,7 @@ struct FunctionHostT {
         registerFunction(std::move(name), std::function{f});
     }
 
-    void handleArchive(InArchive &archive) {
+    void handle(InArchive &archive) {
         auto name = archive.template read<std::string>();
         if (auto f = funcMap.find(name); f != funcMap.end()) {
             f->second(archive);
