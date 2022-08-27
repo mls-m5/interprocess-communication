@@ -35,6 +35,16 @@ struct FunctionHostT {
                                      " from archive was not found"};
         }
     }
+
+    void operator()(InArchive &archive) {
+        handle(archive);
+    }
+
+    template <typename T>
+    void operator()(const T &data) {
+        auto arch = InArchive{data};
+        handle(arch);
+    };
 };
 
 using FunctionHost = FunctionHostT<InArchive>;

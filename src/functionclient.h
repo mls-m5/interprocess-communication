@@ -5,7 +5,7 @@
 
 template <typename OutArchive>
 class FunctionClientT {
-    std::function<void(OutArchive &arch)> callback;
+    std::function<void(std::string_view arch)> callback;
 
     /// Register host std::function
     template <typename R, typename... Args>
@@ -15,13 +15,19 @@ class FunctionClientT {
             auto arch = OutArchive{};
             arch.write(name);
             arch.pack(args...);
-            this->callback(arch);
+            this->callback(arch.ss.str());
         };
     }
 
 public:
     FunctionClientT(std::function<void(OutArchive &arch)> f)
         : callback{f} {}
+
+    template <typename T>
+    FunctionClientT(T *f)
+        : callback{[f](std::string_view arch) {
+            (*f)(arch); //
+        }} {}
 
     /// Register any type that can be converted to std::function
     template <typename F>

@@ -26,8 +26,11 @@ class InArchive {
 public:
     std::stringstream ss;
 
-    InArchive(const std::string &value)
-        : ss{value} {}
+    template <typename T>
+    InArchive(const T &value)
+        : ss{} {
+        ss.write(value.data(), value.size());
+    }
 
     template <typename... Args>
     std::tuple<Args...> unpack() {

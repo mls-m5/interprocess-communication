@@ -7,15 +7,21 @@ struct UdpServer {
 
     boost::asio::io_service service;
     udp::socket socket;
-    std::function<void(std::string)> callback;
+    std::function<void(std::string_view)> callback;
 
     template <typename T>
     void write(const T &value) {}
 
-    UdpServer(uint32_t port, std::function<void(std::string)> callback)
+    UdpServer(uint32_t port, std::function<void(std::string_view)> callback)
         : socket{service,
                  udp::endpoint{udp::v4(), static_cast<unsigned short>(port)}}
         , callback{callback} {}
+
+    /// Take pointer to a callable object
+    template <typename T>
+    UdpServer(uint32_t port, T *handler)
+        : UdpServer{port,
+                    [handler](std::string_view data) { (*handler)(data); }} {}
 
     void start() {
         while (true) {
@@ -57,5 +63,11 @@ struct UdpClient {
     template <typename T>
     void send(const T &data) {
         socket.send_to(boost::asio::buffer(data.data(), data.size()), endpoint);
+    }
+
+    /// Operator () calls send()
+    template <typename T>
+    void operator()(const T &data) {
+        send(data);
     }
 };
