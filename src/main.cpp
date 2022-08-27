@@ -12,6 +12,7 @@ int testFunction(float x, std::string str) {
     std::cout << str << std::endl;
     return static_cast<int>(x);
 }
+
 int main(int argc, char *argv[]) {
     auto settings = Settings{argc, argv};
 
@@ -22,7 +23,6 @@ int main(int argc, char *argv[]) {
     }
 
     if (settings.isServer) {
-
         // Server side
         auto host = FunctionHost{};
 
@@ -39,6 +39,10 @@ int main(int argc, char *argv[]) {
         // client, and the functions needs to match
         host.registerFunction("testFunction", testFunction);
         host.registerFunction("exit", std::exit);
+        host.registerFunction("lambda", [](int x, int y) {
+            std::cout << "lambda:\n";
+            std::cout << "   x = " << x << ", y = " << y << std::endl;
+        });
         udpServer.start();
     }
     else if (settings.isClient) {
@@ -52,14 +56,16 @@ int main(int argc, char *argv[]) {
             udpClient.send(inArch.ss.str());
         }};
 
-        auto testFunctionRemoteHandle =
+        auto testFunctionHandle =
             client.registerFunction<decltype(testFunction)>("testFunction");
         auto exitHandle = client.registerFunction<decltype(exit)>("exit");
+        auto lambdaHandle = client.registerFunction<void(int, int)>("lambda");
 
         // Test call function
-        testFunctionRemoteHandle(3, "hello there");
+        testFunctionHandle(3, "hello there");
+        lambdaHandle(3, 4);
 
-        exitHandle(0); // Just testing to bind to exit to stop server
+        exitHandle(0); // Just testing to bind to `exit()` to stop server
     }
 
     return 0;
