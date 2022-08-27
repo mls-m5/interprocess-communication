@@ -15,43 +15,52 @@ int testFunction(float x, std::string str) {
 int main(int argc, char *argv[]) {
     auto settings = Settings{argc, argv};
 
-    // Server side
-    auto host = FunctionHost{};
+    if (settings.isClient && settings.isServer) {
+        int processNum = fork();
+        settings.isServer = processNum;
+        settings.isClient = !processNum;
+    }
 
-    auto udpServer = UdpServer{settings.port, [&host](std::string data) {
-                                   std::cout << "received data: " << data
-                                             << std::endl;
+    if (settings.isServer) {
 
-                                   auto arch = InArchive{data};
-                                   host.handle(arch);
-                               }};
+        // Server side
+        auto host = FunctionHost{};
 
-    // Client side
-    auto udpClient = UdpClient{settings.address, settings.port};
+        auto udpServer = UdpServer{settings.port, [&host](std::string data) {
+                                       std::cout << "received data: " << data
+                                                 << std::endl;
 
-    auto client = FunctionClient{[&udpClient](OutArchive &arch) {
-        // This is where network code would go in
-        auto inArch = InArchive{arch.ss.str()};
-        udpClient.send(inArch.ss.str());
-    }};
+                                       auto arch = InArchive{data};
+                                       host.handle(arch);
+                                   }};
 
-    // Register function on host and client
-    // This is what needs to be done for every functino on the server and
-    // client
-    host.registerFunction("testFunction", testFunction);
+        // Register function on host
+        // This is what needs to be done for every function on the server and
+        // client, and the functions needs to match
+        host.registerFunction("testFunction", testFunction);
+        host.registerFunction("exit", std::exit);
+        udpServer.start();
+    }
+    else if (settings.isClient) {
 
-    auto testFunctionRemoteHandle =
-        client.registerFunction<decltype(testFunction)>("testFunction");
+        // Client side
+        auto udpClient = UdpClient{settings.address, settings.port};
 
-    // Test call function
-    testFunctionRemoteHandle(3, "hello there");
+        auto client = FunctionClient{[&udpClient](OutArchive &arch) {
+            // This is where network code would go in
+            auto inArch = InArchive{arch.ss.str()};
+            udpClient.send(inArch.ss.str());
+        }};
 
-    host.registerFunction("exit", std::exit);
-    auto exitHandle = client.registerFunction<decltype(exit)>("exit");
+        auto testFunctionRemoteHandle =
+            client.registerFunction<decltype(testFunction)>("testFunction");
+        auto exitHandle = client.registerFunction<decltype(exit)>("exit");
 
-    exitHandle(0); // Just testing to bind to exit to stop server
+        // Test call function
+        testFunctionRemoteHandle(3, "hello there");
 
-    udpServer.start();
+        exitHandle(0); // Just testing to bind to exit to stop server
+    }
 
     return 0;
 }
